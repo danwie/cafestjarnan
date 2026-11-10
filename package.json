@@ -1,0 +1,16 @@
+{
+  "name": "cafestjarnan",
+  "private": true,
+  "workspaces": ["client", "server"],
+  "scripts": {
+    "dev:server": "bun --watch server/src/index.ts",
+    "dev:client": "cd client && bun run dev",
+    "build": "cd client && bun run build",
+    "start": "bun server/src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4.13.17",
+    "zod": "^4.6.7"
+  }
+}

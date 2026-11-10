@@ -7,3 +7,4 @@ dist/
 *.db-*
 data/
 .DS_Store
+teknik.md

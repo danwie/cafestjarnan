@@ -1,6 +1,12 @@
+import * as Sentry from "@sentry/browser";
+
+const dsn = import.meta.env.VITE_SENTRY_DSN;
+if (dsn) {
+  Sentry.init({ dsn });
+}
+
 const el = document.getElementById("status")!;
 
-// Relativ sökväg, så att den fungerar under /cafestjarnan/
 fetch("api/health")
   .then((r) => r.json())
   .then((d) => (el.textContent = d.ok ? "Servern svarar." : "Konstigt svar."))

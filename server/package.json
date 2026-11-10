@@ -1,5 +1,8 @@
 {
   "name": "cafestjarnan-server",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@sentry/bun": "^11.11.0"
+  }
 }

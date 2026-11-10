@@ -32,6 +32,8 @@ jobs:
           context: .
           push: true
           platforms: linux/arm64
+          build-args: |
+            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
           tags: |
             ghcr.io/danwie/cafestjarnan:latest
             ghcr.io/danwie/cafestjarnan:${{ github.sha }}

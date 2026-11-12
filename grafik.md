@@ -1,244 +1,137 @@
-# Caféstjärnan: grafikspecifikation och prompter
+# Caféstjärnan: grafik (arkprompter)
 
-Stil: isometrisk 2,5D, enkel tecknad (cel-shadad) look med rena linjer och starka, klara färger. Fast isometriskt fågelperspektiv. Karaktärer är djur med stora huvuden och förenklade ansikten, som i klassiska 2D-flashspel. Ljusa, överskådliga miljöer och tydliga gränssnitt.
+**Arbetssätt:** bild-AI:n gör **ett ark per prompt**: en enda bild med flera separata figurer på platt magentabakgrund.
+Claude skär ut dem med `tools/slice_sheet.py` (se avsnitt 4). Det sparar prompter, ger jämn stil inom arket och kräver inget exakt rutnät,
+bara att figurerna inte rör vid varandra. Bildstorleken spelar mindre roll: be om **kvadratisk, så stor som verktyget tillåter** (helst 2048×2048 eller mer).
 
-## 1. Arbetsfördelning
+**Vad som görs i kod (inte bild-AI):** rummets golv och väggar, stadens gator, vägnummer, trottoarer och övergångsställen, frosting-virvlar,
+kassan och alla knappar, mätare, bubblor och hjärtan, animationer. Bild-AI gör bara figurer, föremål och ikoner.
 
-Bild-AI är bra på illustrationer men dålig på exakt geometri. Därför ritas allt som måste passa ett rutnät eller styras av spelet i kod, och bild-AI:n får det som är ren illustration.
-
-| Görs i kod (av Claude)                                                                            | Görs av bild-AI                                               |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Staden i leveransen: isometriskt rutnät, gator och hus (SVG), så att koordinaterna alltid stämmer | Kundernas porträtt (10 djur × 6 poser)                        |
-| Frosting-virvlar i cupcake (SVG som färgsätts)                                                    | Cupcake-botten och alla toppings som enskilda ikoner          |
-| Textrutor, dialogramar, knappar och kassans sifferknappsats                                       | Pizzadeg-botten ovanifrån                                     |
-| Digitala mätare för pengar och tålamod                                                            | Inredning: cupcake-café, pizzeria, marknadsstånd (bakgrunder) |
-| Bråk-bitar på pizzan (mask), reaktioner som hjärta, tänkebubbla, Zzz, mynt                        | Säljare vid stånden                                           |
-| Animationer (hopp, vinkning, gungning) av stillbilder                                             | Ikoner (uppgraderingar, mynt, m.m.) och titelbild             |
-| Platshållare med samma filnamn, så att spelet fungerar innan riktig grafik finns                  | Bilar (valfritt, annars ritar jag en enkel i kod)             |
-
-Typsnitt: ett rundat, tydligt typsnitt (t.ex. Fredoka) som stöder å, ä och ö. Det kontrolleras vid bygget.
-
-## 2. Gemensam stil (klistra in i varje prompt)
+## 1. Gemensam stil (klistra in först i varje prompt)
 
 **STYLE:**
-
 ```
-Clean cel-shaded cartoon illustration with a 2.5D isometric look. Bold, uniform, warm dark outlines (about 3-4 px at 1024 px). Flat saturated colors with exactly one hard-edged shadow tone per color (two-tone shading), no gradients, no textures, no airbrush. Bright, cheerful, very easy to read, big simple silhouettes, simplified shapes like classic 2D Flash game art. Light comes from the upper left. Palette: cream, tomato red, sunny yellow, mint green, sky blue, raspberry pink, orange, warm brown. No text, no letters, no logos, no watermark.
-```
-
-**NEGATIVE** (om verktyget har fält för det):
-
-```
-photorealistic, 3D render, gradients, noise, blurry, thin sketchy lines, dark or moody lighting, text, watermark, realistic fur, scary, angry expression, human characters, gendered clothing, makeup, eyelashes, bows
+Clean cel-shaded cartoon illustration with a 2.5D isometric look. Bold, uniform, warm dark outlines (#3A2A33), about 1% of the image width. Flat saturated colors with exactly one hard-edged shadow tone per color (two-tone shading), no gradients, no textures, no airbrush. Bright, cheerful, very easy to read, big simple silhouettes, simplified shapes like classic 2D Flash game art. Light comes from the upper left. Palette: cream, tomato red, sunny yellow, mint green, sky blue, raspberry pink, orange, warm brown. No text, no letters, no numbers, no logos, no watermark.
 ```
 
-**Preliminär palett** (för UI och som riktning):
+**SHEET-regler** (klistra in sist i varje prompt, ändra bara antalet kolumner/rader):
+```
+SHEET RULES: Create exactly ONE single image (do not make several images). The image is a sprite sheet with {COLS} columns and {ROWS} rows, {N} items in total, in reading order (left to right, top to bottom) as listed. Each item stands completely alone with a wide empty margin around it (at least 8% of the cell size). Items must NOT touch, overlap, or cross into other cells. All items have the same scale and the same viewing angle. The background is one flat, solid, pure magenta color (#FF00FF) everywhere, with no shadow on the ground, no gradient, no frame, no grid lines, no labels, no numbers. Do not use magenta, pink-purple or similar colors anywhere in the items. Square image, as large as possible.
+```
 
-| Namn            | Hex     |
-| --------------- | ------- |
-| Kräm (bakgrund) | #FFF4DF |
-| Varm mörk linje | #3A2A33 |
-| Tomatröd        | #EF4D3C |
-| Solgul          | #FFC730 |
-| Mintgrön        | #3FC9A0 |
-| Himmelsblå      | #3FA7F5 |
-| Hallonrosa      | #FF6FA5 |
-| Orange          | #FF8A2B |
-| Brun            | #A8683A |
+**NEGATIVE** (om verktyget har ett fält för det):
+```
+photorealistic, 3D render, gradients, noise, blurry, thin sketchy lines, dark or moody lighting, text, watermark, realistic fur, scary, angry expression, human characters, gendered clothing, makeup, eyelashes, bows, ground shadow, drop shadow, grid lines
+```
 
-## 3. Arbetsordning och konsekvens
+**Palett:** kräm #FFF4DF · linje #3A2A33 · tomatröd #EF4D3C · solgul #FFC730 · mintgrön #3FC9A0 · himmelsblå #3FA7F5 · hallonrosa #FF6FA5 · orange #FF8A2B · brun #A8683A.
 
-1. **Stilreferens först.** Generera en bild på ett djur (räv, pose `vantar`) tills stilen är rätt. Spara den som referens.
-2. Använd referensbilden som stilreferens i **alla** följande bilder (om verktyget stöder det), plus samma STYLE-block.
-3. Börja med **3 arter × 6 poser** (räv, groda, uggla) för att testa kedjan. Fortsätt med övriga först när resultatet fungerar i spelet.
-4. Generera ett djur i taget, alla poser efter varandra, och be om "same character as the reference image".
-5. Kontrollera varje bild mot checklistan nedan.
+## 2. Ordning (för att spara prompter)
 
-**Checklista:**
+1. **Räv-arket** (3.1). Upprepa tills stilen är rätt. Spara det som stilreferens.
+2. Alla följande ark: bifoga räv-arket som stilreferens och skriv "Match the art style, outline weight and shading of the reference image exactly."
+3. **Groda- och uggla-arken**, sedan **matark**, **ikonark**, **stadsark**, **inredningsark**. Övriga djur och säljare när kedjan fungerar i spelet.
+4. Kontrollera varje ark mot checklistan (avsnitt 6) innan det skickas till Claude.
 
-- Genomskinlig bakgrund med rena kanter (ingen vit kant).
-- Ingen text eller bokstäver i bilden.
-- Samma linjetjocklek och skuggning som referensen.
-- Ljus från övre vänster.
-- Könsneutralt: inga rosetter, ögonfransar, mustascher, kläder eller accessoarer.
-- Karaktären fyller ca 85 % av bilden och är centrerad.
+## 3. Prompter
 
-## 4. Filer, format och namn
+### 3.1 Djurark (ett per art): 3 × 3 = 9 bilder
 
-- Format: **PNG med genomskinlighet** (eller WebP), dubbel upplösning mot visningsstorlek.
-- Filnamn **utan å, ä, ö**, gemener, understreck.
-- Mapp: `client/public/art/`. Spelet laddar bilder relativt `import.meta.env.BASE_URL`, eftersom servern serverar spelet både på `/` och `/cafestjarnan`.
-- Nyckel och sökväg hålls i en fil, `client/src/art/manifest.ts`, så att en bild kan bytas utan kodändring.
-
-| Grupp            | Sökväg                             | Storlek   | Antal |
-| ---------------- | ---------------------------------- | --------- | ----- |
-| Kunder           | `art/kunder/{art}_{pose}.png`      | 1024×1024 | 60    |
-| Säljare          | `art/saljare/{namn}.png`           | 1600×1200 | 4     |
-| Bakgrunder       | `art/bakgrund/{namn}.png`          | 2400×1350 | 4     |
-| Cupcake-botten   | `art/mat/cupcake_botten.png`       | 512×512   | 1     |
-| Pizzadeg         | `art/mat/pizza_deg.png`            | 512×512   | 1     |
-| Toppings         | `art/mat/topping_{namn}.png`       | 256×256   | 14    |
-| Ikoner           | `art/ikoner/{namn}.png`            | 256×256   | 14    |
-| Titelbild        | `art/titel/titel.png`              | 2400×1350 | 1     |
-| Bilar (valfritt) | `art/bil/bil{nivå}_{riktning}.png` | 512×512   | 12    |
-
-## 5. Prompter
-
-Alla prompter börjar med **STYLE**-blocket ovan.
-
-### 5.1 Kunder: 10 djur × 6 poser
-
-**Arter** (filnamn): räv `rav`, groda `groda`, uggla `uggla`, katt `katt`, hund `hund`, kanin `kanin`, björn `bjorn`, igelkott `igelkott`, sköldpadda `skoldpadda`, anka `anka`.
-
-**Mall:**
+**Arter** (filnamnsstam): räv `rav`, groda `groda`, uggla `uggla`, katt `katt`, hund `hund`, kanin `kanin`, björn `bjorn`, igelkott `igelkott`, sköldpadda `skoldpadda`, anka `anka`. Börja med de tre första.
 
 ```
 [STYLE]
-Head-and-shoulders portrait of a cute {SPECIES} customer for a café game. Oversized head (about 60% of the figure height), tiny simplified body with only the shoulders and upper chest visible, large round eyes, a tiny nose and a simple mouth, minimal facial detail like classic Flash cartoon characters. Gender-neutral, no clothing, no accessories. Natural species colors, but saturated. Front-facing with a slight three-quarter angle as seen from an isometric camera. Pose and expression: {POSE}. Centered, fills about 85% of the canvas, transparent background, 1024x1024.
+Character sheet of one cute {SPECIES} customer for a café game. The same character in all 9 cells: oversized head (about 60% of the figure height), simplified round body, large round eyes, tiny nose, simple mouth, minimal facial detail like classic Flash cartoon characters. Gender-neutral, no clothing, no accessories, natural species colors but saturated. Friendly and never angry.
+Row 1, head-and-shoulders portraits (head and upper chest only), front-facing with a slight three-quarter angle:
+ 1. neutral, small friendly closed-mouth smile, waiting patiently
+ 2. mouth open as if speaking mid-sentence, one paw slightly raised, giving an order
+ 3. big happy smile, eyes closed as happy arcs, cheeks lifted
+Row 2, head-and-shoulders portraits, same angle:
+ 4. one eyebrow raised, small wavy mouth, head tilted, glancing sideways, unsure
+ 5. big yawn, eyes half closed, sleepy, one paw near the mouth
+ 6. friendly smile, one paw waving goodbye, shoulders in a small shrug
+Row 3, FULL-BODY figures facing right (three-quarter view), feet visible, arms hanging at the sides, same size as each other:
+ 7. standing still, neutral
+ 8. walking, left leg forward, right arm forward, left arm back
+ 9. walking, right leg forward, left arm forward, right arm back
+Hearts, thought bubbles, price tags and "Zzz" are NOT drawn, the game adds those.
+[SHEET-regler med 3 columns, 3 rows, 9 items]
 ```
+Filnamn i ordning: `{art}_vantar,{art}_pratar,{art}_glad,{art}_tveksam,{art}_gapar,{art}_vinkar,{art}_stand,{art}_gar1,{art}_gar2` → `client/public/art/kunder/`
 
-**Poser** (filnamn, beskrivning):
-
-| Fil       | `{POSE}`                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------- |
-| `vantar`  | relaxed and neutral, mouth closed in a small friendly smile, waiting patiently              |
-| `pratar`  | mouth open as if speaking mid-sentence, one paw raised slightly while giving an order       |
-| `glad`    | big happy smile, eyes closed as happy arcs, cheeks lifted, joyful                           |
-| `tveksam` | one eyebrow raised, mouth a small wavy line, head tilted, glancing sideways, unsure ("hmm") |
-| `gapar`   | big yawn, eyes half closed, sleepy, one paw near the mouth                                  |
-| `vinkar`  | friendly smile, one paw waving goodbye, shoulders in a small shrug                          |
-
-Hjärtan, tänkebubblor, prislappar och "Zzz" ritas inte i bilderna, utan läggs på av spelet.
-
-### 5.2 Säljare vid stånd
-
-```
-[STYLE]
-Isometric view of a small colorful market stall with a counter, an awning in {COLOR} and crates of ingredients, and a friendly {SPECIES} seller behind the counter with an oversized head and simplified face, gender-neutral, no clothing. Cheerful and tidy. Leave the lower third of the image fairly empty for game UI. Transparent background, 1600x1200.
-```
-
-| Fil               | `{SPECIES}`         | `{COLOR}`    | Används           |
-| ----------------- | ------------------- | ------------ | ----------------- |
-| `saljare_cupcake` | mullvad (mole)      | sky blue     | Cupcake-marknaden |
-| `saljare_1`       | sköldpadda (turtle) | tomato red   | Pizza, säljare 1  |
-| `saljare_2`       | gris (pig)          | sunny yellow | Pizza, säljare 2  |
-| `saljare_3`       | get (goat)          | mint green   | Pizza, säljare 3  |
-
-### 5.3 Bakgrunder (inredning, inga karaktärer)
-
-Bildens viktiga innehåll ska ligga i mitten (ca 60 % av bredden), eftersom kanterna beskärs på smala skärmar.
-
-**`cupcake_cafe`:**
+### 3.2 Matark: 6 × 3 = 18 bilder
 
 ```
 [STYLE]
-Isometric cutaway interior of a bright, cozy cupcake café seen from a fixed isometric angle. A counter with an old-fashioned cash register on the right, glass display of cupcakes, pastel but saturated walls, a star-shaped sign on the wall (no letters). A clear, calm empty area in front of the counter where one customer will be added later. No characters, no text. Wide 16:9, 2400x1350.
+Food sprite sheet for a café game, each item a single object, readable at small size.
+Row 1: 1. an empty cupcake base: pleated yellow paper cup with a flat-topped sponge cake, no frosting, three-quarter front angle; 2. a round raw pizza dough base seen from straight above, golden crust, flat tan center, no sauce or toppings; 3. a closed cardboard pizza box seen from a three-quarter angle, cream with a red stripe, no text; 4. a small open cupcake box with two plain cupcakes, three-quarter angle; 5. one tomato slice, from above; 6. one slice of yellow cheese with holes, from above.
+Row 2: 7. one folded slice of pink ham; 8. one sliced mushroom; 9. one ring of red bell pepper; 10. one chunk of pineapple; 11. a small cluster of three corn kernels; 12. one black olive ring.
+Row 3: 13. a small cluster of colorful sprinkles; 14. one strawberry; 15. a small cluster of three blueberries; 16. two chunks of dark chocolate; 17. one dollop of whipped cream; 18. one red cherry with a stem.
+[SHEET-regler med 6 columns, 3 rows, 18 items]
 ```
+Filnamn: `cupcake_botten,pizza_deg,pizza_ask,cupcake_ask,topping_tomat,topping_ost,topping_skinka,topping_svamp,topping_paprika,topping_ananas,topping_majs,topping_oliver,topping_strossel,topping_jordgubbe,topping_blabar,topping_chokladbitar,topping_gradde,topping_korsbar` → `art/mat/`
 
-**`pizzeria`:**
-
-```
-[STYLE]
-Isometric cutaway interior of a cheerful pizzeria seen from a fixed isometric angle. A long counter with an old-fashioned cash register, a brick pizza oven on the back wall, a marked waiting line on the floor leading to the counter with space for five customers in a row. Warm but bright colors, no characters, no text. Wide 16:9, 2400x1350.
-```
-
-**`marknad_cupcake`** och **`marknad_pizza`:**
+### 3.3 Ikonark: 4 × 3 = 12 bilder
 
 ```
 [STYLE]
-Isometric view of a lively outdoor market square, bright and tidy, with empty stall spaces ({ONE or THREE}) in the middle where market stalls will be added later. Cobblestones, a few trees, a fountain, clear open space. No characters, no text. Wide 16:9, 2400x1350.
+Chunky game UI icons, thick outline, readable at 48 px, front view, one object each:
+1. a shiny gold coin with a star; 2. an old-fashioned cash register; 3. a small cute delivery van seen from the front; 4. a hanging shop sign with a star (no letters); 5. a small brick oven with fire; 6. a glass tip jar with coins; 7. a menu card with a plus sign; 8. a red heart; 9. a round alarm clock; 10. a yellow star; 11. a shopping cart; 12. a green check mark in a circle.
+[SHEET-regler med 4 columns, 3 rows, 12 items]
 ```
+Filnamn: `mynt,kassa,bil,skylt,ugn,dricksburk,menyplats,hjarta,klocka,stjarna,kundvagn,ok` → `art/ikoner/`
 
-### 5.4 Mat
-
-**`cupcake_botten`:**
-
-```
-[STYLE]
-A single cupcake base: a pleated paper cup in sunny yellow with a sponge cake top, seen from a three-quarter front angle, the top of the sponge is flat and open so frosting can be added on top later. No frosting, no toppings. Centered, transparent background, 512x512.
-```
-
-**`pizza_deg`:**
+### 3.4 Stadsark: 4 × 3 = 12 bilder (**sedda rakt uppifrån**, staden är uppifrån-och-ned, inte isometrisk)
 
 ```
-[STYLE]
-A round raw pizza dough base seen straight from above, golden crust edge, flat tan center, no sauce, no cheese, no toppings. Centered, transparent background, 512x512.
+[STYLE, but all items are seen straight from above (top-down map view), not isometric]
+Top-down city sprites for a delivery game:
+1-6. six different small houses seen from above, each with a distinct colored roof (pink, yellow, blue, orange, mint green, cream) and a tiny garden edge, each fitting a square footprint;
+7. a small red delivery van seen from above, pointing right; 8. a round green tree seen from above; 9. a second, different round tree with pink blossoms; 10. a green bush; 11. a striped orange traffic cone seen from above; 12. a flower bed with red and yellow tulips seen from above.
+[SHEET-regler med 4 columns, 3 rows, 12 items]
 ```
+Filnamn: `hus1,hus2,hus3,hus4,hus5,hus6,bil_upp,trad1,trad2,buske,kon,blomsterland` → `art/stad/`
 
-**Toppings** (en bit eller en liten klunga, ritas utströdda av spelet). Mall:
+### 3.5 Inredningsark (pizzeria, isometriska föremål): 3 × 3 = 9 bilder
 
 ```
 [STYLE]
-A single {ITEM} as a small game icon, seen from above (or a three-quarter angle for cupcake toppings), simple, bold, readable at small size. Centered, transparent background, 256x256.
+Isometric pizzeria props, each a single standalone object seen from the same fixed isometric angle (from the front-right), no floor, no walls:
+1. a long wooden service counter segment with an orange top (about 5 units long); 2. an old-fashioned cash register on a small base; 3. a red brick pizza oven with a glowing fire opening; 4. a large yellow star-shaped wall sign (no letters); 5. a potted green plant; 6. a window with a flower box; 7. a wall-mounted chalkboard menu with simple pizza icons (no letters); 8. a hanging ceiling lamp; 9. an open doorway frame with a red awning (no door).
+[SHEET-regler med 3 columns, 3 rows, 9 items]
 ```
+Filnamn: `disk,kassa,ugn,stjarnskylt,planta,fonster,menytavla,lampa,dorr` → `art/pizzeria/`
 
-| Fil                    | `{ITEM}`                              |
-| ---------------------- | ------------------------------------- |
-| `topping_tomat`        | one tomato slice                      |
-| `topping_ost`          | one slice of yellow cheese with holes |
-| `topping_skinka`       | one folded slice of pink ham          |
-| `topping_svamp`        | one sliced mushroom                   |
-| `topping_paprika`      | one ring of red bell pepper           |
-| `topping_ananas`       | one chunk of pineapple                |
-| `topping_majs`         | a small cluster of three corn kernels |
-| `topping_oliver`       | one slice of black olive ring         |
-| `topping_strossel`     | a small cluster of colorful sprinkles |
-| `topping_jordgubbe`    | one strawberry                        |
-| `topping_blabar`       | a small cluster of three blueberries  |
-| `topping_chokladbitar` | two chunks of dark chocolate          |
-| `topping_gradde`       | one dollop of whipped cream           |
-| `topping_korsbar`      | one red cherry with a stem            |
-
-Listan har 14 sorter: 8 för pizza och 6 för cupcake. Frosting i cupcake ritas i kod och ingår inte här.
-
-### 5.5 Ikoner (bygg gärna en i taget, för jämn stil)
-
-Mall:
+### 3.6 Säljarark: 2 × 2 = 4 bilder (senare)
 
 ```
 [STYLE]
-A chunky game UI icon of {ICON}, thick outline, readable at 48 px, front view, single object centered, transparent background, 256x256.
+Four isometric market stalls, each with a counter, a colored awning, crates of ingredients and a friendly animal seller behind the counter with an oversized head and simplified face, gender-neutral, no clothing:
+1. a mole, sky-blue awning; 2. a turtle, tomato-red awning; 3. a pig, sunny-yellow awning; 4. a goat, mint-green awning.
+[SHEET-regler med 2 columns, 2 rows, 4 items]
 ```
+Filnamn: `saljare_cupcake,saljare_1,saljare_2,saljare_3` → `art/saljare/`
 
-| Fil          | `{ICON}`                                |
-| ------------ | --------------------------------------- |
-| `mynt`       | a shiny gold coin with a star           |
-| `kassa`      | an old-fashioned cash register          |
-| `bil`        | a small cute delivery van               |
-| `skylt`      | a hanging shop sign with a star         |
-| `ugn`        | a small brick oven with fire            |
-| `dricksburk` | a glass tip jar with coins              |
-| `menyplats`  | a menu card with a plus sign            |
-| `klocka`     | a round alarm clock                     |
-| `hjarta`     | a red heart                             |
-| `stjarna`    | a yellow star                           |
-| `kundko`     | three small round animal heads in a row |
-| `lager`      | a wooden crate of ingredients           |
-| `graf`       | a small bar chart                       |
-| `pil`        | a bold curved arrow                     |
+### 3.7 Titelbild (senare, en vanlig bild, inget ark)
 
-### 5.6 Titelbild
+En bred bild (16:9) i samma stil: ett glatt café med en stor gul stjärna och några av djuren framför. Ingen text, den läggs på av spelet.
+
+## 4. Så skär Claude ut arken
 
 ```
-[STYLE]
-Title screen illustration: a sunny isometric street corner with a cupcake café on the left and a pizzeria on the right, a big yellow star hanging above the middle, a few cute oversized-head animal customers walking by (gender-neutral, no clothing). Leave a clear space at the top for the game name, which will be added in code. No text. Wide 16:9, 2400x1350.
+python3 tools/slice_sheet.py ark_rav.png --cols 3 --rows 3 --out client/public/art/kunder --size 1024 \
+  --names rav_vantar,rav_pratar,rav_glad,rav_tveksam,rav_gapar,rav_vinkar,rav_stand,rav_gar1,rav_gar2
 ```
+Verktyget gör magenta genomskinligt (utan färgkant), hittar figurerna oavsett exakt rutnät, ordnar dem rad för rad, skär och döper dem, och avbryter med felmeddelande om antalet inte stämmer. Därefter läggs nycklarna in i `ART_AVAILABLE` (`client/src/scene/manifest.ts`) och bilderna används i stället för platshållarna.
 
-### 5.7 Bilar (valfritt)
+## 5. Filer
 
-Tre nivåer (liten bil, större bil, stor skåpbil) och fyra isometriska riktningar (`ne`, `nw`, `se`, `sw`). Mall:
+PNG med genomskinlighet, filnamn utan å/ä/ö (gemener, understreck), under `client/public/art/` i undermappar enligt ovan.
 
-```
-[STYLE]
-A cute {LEVEL} delivery vehicle in isometric view facing {DIRECTION} (diagonal), colors tomato red and cream, simple and chunky. Centered, transparent background, 512x512.
-```
+## 6. Checklista per ark
 
-Om bilderna inte blir användbara ritar jag en enkel bil i SVG i kod.
-
-## 6. Hur grafiken används i spelet
-
-- **Försäljning:** bakgrunden ligger bakom, kunden visas som porträtt vid disken (pizza: fem i rad) och byter pose efter händelse (`pratar` vid beställning, `glad`, `tveksam`, `gapar`, `vinkar`). Spelet lägger på hjärta, tänkebubbla och mätare.
-- **Menybyggare:** pizzan visas ovanifrån och cupcaken framifrån. Toppings sprids slumpmässigt (men samma varje gång för samma variant) av koden. Frosting är en färgsatt SVG-virvel.
-- **Bråk:** pizzan klipps i bitar med en mask, så inga extra bilder behövs.
-- **Leverans:** staden ritas i kod som isometriskt rutnät med koordinater längs kanterna, och bilen glider mellan rutorna.
-- **Gränssnitt:** textrutor, knappar och digitala mätare för pengar och tålamod ritas i CSS/SVG med paletten ovan.
+- Exakt rätt antal figurer, i rätt ordning, och ingen rör vid en annan eller vid bildkanten.
+- Platt, jämn magentabakgrund. Inga skuggor på marken, inga rutnätslinjer, ingen text eller siffror.
+- Samma linjetjocklek och skuggning som referensen. Ljus från övre vänster.
+- Könsneutralt: inga rosetter, ögonfransar, kläder eller accessoarer.
+- Djurarken: samma karaktär i alla 9 rutor, och helkroppsbilderna lika stora och vända åt höger.

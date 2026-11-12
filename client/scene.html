@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caféstjärnan: scenprov</title>
+  <style>
+    :root { --ink:#3a2a33; --bg:#fff4df; --yellow:#ffc730; --green:#3fc9a0; --blue:#3fa7f5; --red:#ef4d3c; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:18px/1.4 system-ui, sans-serif; }
+    main { max-width:980px; margin:0 auto; padding:12px; }
+    h1 { margin:.2em 0; font-size:1.3em; }
+    .tabs button.on { background:var(--yellow); }
+    button { font:inherit; font-weight:700; padding:7px 12px; margin:3px; border:3px solid var(--ink); border-radius:12px; background:var(--green); cursor:pointer; color:var(--ink); }
+    button.alt { background:var(--blue); } button.warn { background:var(--red); color:#fff; }
+    input, select { font:inherit; padding:5px 8px; border:3px solid var(--ink); border-radius:10px; width:4.5em; }
+    #stage { width:100%; border:3px solid var(--ink); border-radius:14px; overflow:hidden; background:#fff; line-height:0; }
+    .stagewrap { position:relative; }
+    #regbox:empty { display:none; }
+    #regbox.over { position:absolute; right:10px; bottom:10px; width:min(34%,340px); }
+    #regbox.under { margin:12px auto 0; max-width:460px; }
+    #regbox.over .reg { max-width:none; }
+    @media (max-width:760px) { #regbox.over { position:static; width:auto; margin:12px auto 0; max-width:460px; } }
+    .prompt { font-weight:700; margin:10px 0 0; }
+    .row { margin:8px 0; } .log { font-size:.85em; opacity:.8; min-height:1.4em; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>⭐ Caféstjärnan: scenprov <small>(platshållargrafik)</small></h1>
+    <div class="tabs">
+      <button data-tab="pizza" class="on">🍕 Pizzeria</button>
+      <button data-tab="city">🧁 Stad</button>
+      <button data-tab="order">🧾 Cupcake-kassa</button>
+    </div>
+    <div class="stagewrap">
+      <div id="stage"></div>
+      <div id="regbox"></div>
+    </div>
+    <div class="row" id="controls"></div>
+    <div class="log" id="log"></div>
+  </main>
+  <script type="module" src="/src/scene-sandbox.ts"></script>
+</body>
+</html>
